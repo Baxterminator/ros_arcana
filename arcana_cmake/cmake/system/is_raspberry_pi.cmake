@@ -20,9 +20,33 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-find_package(ament_cmake QUIET REQUIRED)
+function(check_raspberry_pi)
+  exec_program("cat /proc/cpuinfo | grep model -i -m 2" OUTPUT_VARIABLE cpu_output)
+  string(FIND ${cpu_output} "Raspberry" has_raspberry)
 
-file(GLOB_RECURSE cmake_files LIST_DIRECTORIES false "${arcana_cmake_DIR}/**/*.cmake")
-foreach(child ${cmake_files})
-  include(${child})
-endforeach()
+  # Found a raspberry, fetching data
+  if(NOT ${has_raspberry} EQUAL -1)
+    set(IS_RASPBERRY YES PARENT_SCOPE)
+
+    # Fetch raspberry pi model
+    string(REGEX MATCH "(Raspberry.+$)" model_name ${cpu_output})
+    set(RASPBERRY_MODEL ${model_name} PARENT_SCOPE)
+
+  # Not a raspberry, still fetch the data of the CPU
+  else()
+    set(IS_RASPBERRY NO PARENT_SCOPE)
+
+    # Fetch CPU Model
+    string(REGEX MATCH "([mM]odel [nN]ame)" has_model_name ${cpu_output})
+    if(has_model_name)
+      string(REGEX MATCH "[mM]odel [nN]ame.+: .+" model_name ${cpu_output})
+      string(REGEX REPLACE "[mM]odel [nN]ame.+: " "" model_name ${model_name})
+    else()
+      string(REGEX MATCH "[mM]odel.+:.+\n" model_name ${cpu_output})
+      string(REGEX REPLACE "[mM]odel.+: " "" model_name ${model_name})
+    endif()
+    string(STRIP ${model_name} model_name)
+  endif()
+
+  set(CPU_MODEL ${model_name} PARENT_SCOPE)
+endfunction()
