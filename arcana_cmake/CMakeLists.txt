@@ -6,14 +6,7 @@ set(CMAKE_BUILD_TYPE Release)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON) 
 
 find_package(ament_cmake REQUIRED)
-find_package(ament_cmake_gmock REQUIRED)
-find_package(ament_cmake_gtest REQUIRED)
 
-ament_package(
-  CONFIG_EXTRAS "arcana_cmake_extras.cmake"
-)
+include("cmake/compiling/cmake.cmake")
 
-install(
-  DIRECTORY cmake
-  DESTINATION share/${PROJECT_NAME}
-)
+ament_add_cmake(DIRS "cmake" "hello")
