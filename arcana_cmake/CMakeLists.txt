@@ -8,5 +8,11 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 find_package(ament_cmake REQUIRED)
 
 include("cmake/compiling/cmake.cmake")
+include("cmake/system/ros.cmake")
+include("cmake/compiling/package.cmake")
+include("cmake/watcher/watcher.cmake")
 
-ament_add_cmake(DIRS "cmake" "hello")
+register_cmake(DIRS "cmake")
+setup_project_watcher(_CUSTOM_ROOT "${CMAKE_CURRENT_LIST_DIR}/cmake" DISPLAY)
+
+arcana_package()
