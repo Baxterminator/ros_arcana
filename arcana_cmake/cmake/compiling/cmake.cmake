@@ -20,10 +20,12 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-find_package(ament_cmake QUIET REQUIRED)
+find_package(ament_cmake_auto)
 
-# Package, create extra files and install cmake functions
-macro(ament_add_cmake)
+# Walks in given folders to register the extras cmake files that this
+# package expose. It will later be packed together inside make_extras_file()
+# then passed to ament through arcana_package().
+function(register_cmake)
   cmake_parse_arguments(ARG "" "" "FILES;DIRS" ${ARGN})
 
   if (NOT ARG_FILES AND NOT ARG_DIRS)
@@ -31,7 +33,8 @@ macro(ament_add_cmake)
     return()
   endif()
 
-  message("Installing cmake files with\n   -> ARG_FILES: ${ARG_FILES}\n   -> ARG_DIRS: ${ARG_DIRS}")
+  message("Installing extra cmake files:")
+  set(extras_list ${ARCANA_${PROJECT_NAME}_CMAKE_EXTRAS})
 
   # Install directories
   if (ARG_DIRS)
@@ -52,14 +55,22 @@ macro(ament_add_cmake)
       endif()
 
       # Copy everything inside of these directories
-      file(GLOB_RECURSE files LIST_DIRECTORIES false RELATIVE "${CMAKE_CURRENT_LIST_DIR}/${rel_dir}" "${rel_dir}/**/*.cmake" "${rel_dir}/*.cmake")
+      file(GLOB_RECURSE files LIST_DIRECTORIES false RELATIVE "${CMAKE_CURRENT_LIST_DIR}/${rel_dir}" "${rel_dir}/**/*" "${rel_dir}/*")
       foreach(file ${files})
+        # Test if cmake file
+        string(FIND ${file} ".cmake" is_cmake_file)
+        if(${is_cmake_file} GREATER -1)
+          list(APPEND extras_list ${file})
+        endif()
+
+        # Install file
+        message("  -> Found file ${file}")
         get_filename_component(file_dir ${file} DIRECTORY)
-        list(APPEND found_files ${file})
         install(
           FILES "${rel_dir}/${file}"
           DESTINATION share/${PROJECT_NAME}/cmake/${file_dir}
-        ) 
+        )
+        # set_property(GLOBAL APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${file})
       endforeach()
     endforeach()
   endif()
@@ -80,26 +91,41 @@ macro(ament_add_cmake)
         endif()
       endif()
 
-      # Install file 
-      list(APPEND found_files ${file})
+      # Test if cmake file
+      string(FIND ${file} ".cmake" is_cmake_file)
+      if(${is_cmake_fime} GREATER -1)
+        list(APPEND extras_list ${file})
+      endif()
+
+      # Install file
+      message("  -> Found file ${file}")
       install(
         FILES "${file}"
         DESTINATION share/${PROJECT_NAME}/cmake/
       )
+      # set_property(GLOBAL APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${file})
     endforeach()
   endif()
 
-  # Make extras file
-  set(extras_file_path "${CMAKE_CURRENT_BINARY_DIR}/autogen_${PROJECT_NAME}_extras.cmake")
+  # Set global value of extras cmake files
+  set(ARCANA_${PROJECT_NAME}_CMAKE_EXTRAS ${extras_list} PARENT_SCOPE)
+endfunction()
+
+# -----------------------------------------------------------------------------
+
+# Write the file registering the extras cmake file for the package
+function(make_extras_file)
+  set(cmake_file "${CMAKE_CURRENT_BINARY_DIR}/autogen_${PROJECT_NAME}_extras.cmake")
+
+
+  # Build file content
   set(extras_content "find_package(ament_cmake QUIET REQUIRED)")
-  foreach(file ${found_files})
-    set(extras_content "${extras_content}\ninclude(\${${PROJECT_NAME}_DIR}/${file})")
+  foreach(file ${ARCANA_${PROJECT_NAME}_CMAKE_EXTRAS})
+    string(APPEND extras_content "\ninclude(\${${PROJECT_NAME}_DIR}/${file})")
   endforeach()
-  file(WRITE ${extras_file_path} ${extras_content})  
 
-  # Add it to ament
-  ament_package(
-    CONFIG_EXTRAS ${extras_file_path}
-  )
+  # Export it
+  file(WRITE ${cmake_file} ${extras_content})
+  set(ARCANA_${PROJECT_NAME}_EXTRA_CMAKE_PATH ${cmake_file} PARENT_SCOPE) 
+endfunction()
 
-endmacro()
