@@ -45,4 +45,5 @@ function(setup_project_watcher)
       TARGET "${PROJECT_NAME}_arcana_watcher" PRE_BUILD
       COMMAND python3 "${_watcher_root}/watcher/project_watcher.py" ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${_flags} ${_watcher_folders}
   )
+  exec_program("python3 ${_watcher_root}/watcher/project_watcher.py ${CMAKE_CURRENT_LIST_DIR} ${CMAKE_CURRENT_BINARY_DIR} ${_watcher_folders}")
 endfunction()

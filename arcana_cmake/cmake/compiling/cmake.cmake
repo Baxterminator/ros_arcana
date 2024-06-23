@@ -70,7 +70,6 @@ function(register_cmake)
           FILES "${rel_dir}/${file}"
           DESTINATION share/${PROJECT_NAME}/cmake/${file_dir}
         )
-        # set_property(GLOBAL APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${file})
       endforeach()
     endforeach()
   endif()
@@ -103,7 +102,6 @@ function(register_cmake)
         FILES "${file}"
         DESTINATION share/${PROJECT_NAME}/cmake/
       )
-      # set_property(GLOBAL APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${file})
     endforeach()
   endif()
 
