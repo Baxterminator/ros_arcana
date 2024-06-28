@@ -44,7 +44,7 @@ function(install_xacro_files)
 
     set(xacro_cmd "exec_program(\"xacro ${CMAKE_CURRENT_LIST_DIR}/${rel_path} -o ${install_dir}/${out_path}\" OUTPUT_VARIABLE out)\n")
     string(APPEND xacro_cmd "if(\${out})\nmessage(\"${ARCANA_XACRO_PREFIX}Error when compiling xacro file ${file}:\n\${out}\")\nelse()\n")
-    string(APPEND xacro_cmd "message(\"${ARCANA_XACRO_PREFIX}Compiling xacro ${file}\")\n")
+    string(APPEND xacro_cmd "message(\"${ARCANA_XACRO_PREFIX}Compiled xacro ${file}\n \${out}\")\n")
     string(APPEND xacro_cmd "file(READ ${install_dir}/${out_path} file_content)\n")
     string(APPEND xacro_cmd "string(REGEX REPLACE \"<!--[^<>]*-->\n\" \"\" file_content_out \${file_content})\n")
     string(APPEND xacro_cmd "file(WRITE ${install_dir}/${out_path} \${file_content_out})\n")

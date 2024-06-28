@@ -1,0 +1,83 @@
+<!--
+
+ArUco model generation xacro macro made by Meltwin (https://github.com/Meltwin)
+Copyright (c) 2024 - Meltwin for the package ros_arcana
+Distributed under the MIT Licence
+
+-->
+
+<xacro xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:macro name="arucoPixel" params="name index px pz N size color">
+    <link name="${name}_b${index}">
+      <xacro:property name="x" value="${px*size/1000}"/>
+      <xacro:property name="z" value="${(N-1 - pz)*size/1000}"/>
+      <xacro:property name="pose" value="${x} 0.0 ${z} 0.0 0.0 0.0"/>
+
+      <inertial>
+        <inertia>
+          <ixx>1</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1</iyy>
+          <iyz>0</iyz>
+          <izz>1</izz>
+        </inertia>
+        <mass>100.0</mass>
+      </inertial>
+
+      <visual name="${name}_b${index}_v">
+        <pose>${pose}</pose>
+        <geometry>
+          <box>
+            <size>${size/1000} ${size/1000/10} ${size/1000}</size>
+          </box>
+        </geometry>
+        
+        <xacro:property name="byteColor" value="${color} ${color} ${color} 1"/>
+        <material>
+            <diffuse>${byteColor}</diffuse>
+        </material>        
+      </visual>
+    </link>
+  </xacro:macro>
+
+  <xacro:macro name="recursiveArUco" params="name index N size bytestring">
+    <xacro:property name="x" value="${index % N}"/>
+    <xacro:property name="z" value="${index // N}"/>
+
+    <xacro:if value="${index != N*N}">
+      <xacro:property name="isEdge" value="${ x == 0 or x == N - 1 or z == 0 or z == N-1}"/>
+      <xacro:if value="${isEdge}">
+        <xacro:property name="bytecolor" value="0"/>
+      </xacro:if>
+      <xacro:if value="${not isEdge}">
+        <xacro:property name="lookupX" value="${x-1}"/>
+        <xacro:property name="lookupZ" value="${z-1}"/>
+        <xacro:property name="lookupIndex" value="${lookupX + lookupZ*(N-2)}" />
+        <xacro:property name="bytecolor" value="${bytestring[lookupIndex]}"/>
+      </xacro:if>
+
+      <xacro:arucoPixel name="${name}" index="${index}" px="${x}" pz="${z}" N="${N}" size="${size}" color="${bytecolor}"/>
+      <xacro:recursiveArUco name="${name}" index="${index + 1}" N="${N}" size="${size}" bytestring="${bytestring}"/>
+    </xacro:if>
+  </xacro:macro>
+
+  <xacro:macro name="arucoRaw" params="name N:=4 size_mm:=10.0 bytestring pose">
+    <model name="${name}">
+      <pose>${pose}</pose>
+      <static>true</static>
+      <xacro:recursiveArUco name="${name}" index="0" N="${N+2}" size="${size_mm}" bytestring="${list(bytestring)}"/>
+    </model>
+  </xacro:macro>
+
+  <xacro:macro name="aruco" params="N:=4 size_mm:=10.0 pose id name:=${None}">
+    <xacro:if value="${name == None}">
+      <xacro:property name="name" value="aruco${id}"/>
+    </xacro:if>
+
+    <xacro:property name="yaml_file" value="$(find arcana_gazebo)/data/aruco_${N}x${N}_1000.yaml" />
+    <xacro:property name="props" value="${xacro.load_yaml(yaml_file)}"/>
+
+    <xacro:arucoRaw name="${name}" N="${N}" size_mm="${size_mm}" pose="${pose}" bytestring="'${str(props[id])}'"/>
+  </xacro:macro>
+</xacro>
