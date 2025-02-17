@@ -1,4 +1,4 @@
-# Copyright (C) 2024-2024 by Meltwin
+# Copyright (C) 2024-2025 by Meltwin
 # Authors:
 #   Geoffrey Côte: geoffrey.cote@centraliens-nantes.org
 
@@ -20,16 +20,16 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-# Wrapper for the packing function that include all functionnality 
-# that are needed by the arcana_cmake package
-macro(arcana_package)
-    cmake_parse_arguments(ARG "" "" "" ${ARGN})
+macro(setup_display n_steps)
+    set(N_STEPS ${n_steps})
+    set(STEP 1)
+endmacro()
 
-    make_extras_file()
-    get_ros_version()
+macro(incStep)
+    math(EXPR STEP "${STEP}+1")
+endmacro()
 
-    ament_auto_package(
-        CONFIG_EXTRAS ${ARCANA_${PROJECT_NAME}_EXTRA_CMAKE_PATH}
-        ${ARG_UNPARSED_ARGUMENTS}
-    )
+macro(dispSection text)
+    message("-- [${STEP}/${N_STEPS}] ${text}")
+    incStep()
 endmacro()
