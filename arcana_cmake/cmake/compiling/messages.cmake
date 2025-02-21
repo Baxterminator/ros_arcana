@@ -37,10 +37,10 @@ macro(register_messages)
         set(action_dir ${ARG_ACTION_DIR})
     endif()
 
-    file(GLOB ${PROJEC_NAME}_msg_files RELATIVE "${CMAKE_CURRENT_LIST_DIR}"
-    "${CMAKE_CURRENT_LIST_DIR}/${msg_dir}/*.msg"
-    "${CMAKE_CURRENT_LIST_DIR}/${srv_dir}/*.srv"
-    "${CMAKE_CURRENT_LIST_DIR}/${action_dir}/*.action"
+    file(GLOB_RECURSE ${PROJEC_NAME}_msg_files RELATIVE "${CMAKE_CURRENT_LIST_DIR}"
+        "${CMAKE_CURRENT_LIST_DIR}/${msg_dir}/**.msg"
+        "${CMAKE_CURRENT_LIST_DIR}/${srv_dir}/**.srv"
+        "${CMAKE_CURRENT_LIST_DIR}/${action_dir}/**.action"
     )
     set(${PROJECT_NAME}_msg_deps rosidl_default_runtime ${ARG_DEPS})
     if (${PROJEC_NAME}_msg_files)
