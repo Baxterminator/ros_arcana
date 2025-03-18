@@ -1,10 +1,10 @@
 # =============================================================================
 #                         ROS2 launch xacro utils methods
 #
-# (c) DTU Electro 2025
+# (c) Meltwin 2025
 # Author: Geoffrey Côte
 #
-# Part of the raubase_core_python package
+# Part of the arcana_python package
 # This python file gather several methods useful to write path in launch files.
 # =============================================================================
 # Package imports

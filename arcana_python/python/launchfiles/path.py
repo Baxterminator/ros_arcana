@@ -1,21 +1,23 @@
 # =============================================================================
 #                         ROS2 launch path utils methods
 #
-# (c) DTU Electro 2025
+# (c) Meltwin 2025
 # Author: Geoffrey Côte
 #
-# Part of the raubase_core_python package
+# Part of the arcana_python package
 # This python file gather several methods useful to write path in launch files.
 # =============================================================================
 
 from enum import Enum
 import sys
 import os
-from typing import Text
+from typing import List, Text
 
 from ament_index_python import get_package_share_directory
 from launch import LaunchContext, Substitution
 from launch.substitutions import TextSubstitution
+
+from .__utils import SubstitionsInput, normalize, normalize_list
 
 
 # =============================================================================
@@ -117,14 +119,29 @@ class AdvPathSubstitution(Substitution):
         substitution (Substitution | str): the path to the world file
     """
 
-    def __init__(self, substitution: Substitution | str) -> None:
-        if type(substitution) is str:
-            self._substitution = TextSubstitution(text=substitution)
-        else:
-            self._substitution: Substitution = substitution  # type: ignore
+    def __init__(self, substitution: SubstitionsInput) -> None:
+        self._substitution = normalize(substitution)
 
     def describe(self) -> Text:
         return "AdvPathSubstitution({})".format(self._substitution.describe())
 
     def perform(self, context: LaunchContext) -> str:
         return PathUtils.get_object_path(self._substitution.perform(context))
+
+
+class ConcatenatedPathsSubstitution(Substitution):
+    """
+    Substitution that concatenate several paths in one PATH-like string.
+    All of the paths while be wrapped around AdvPathSubstitution objects
+    """
+
+    def __init__(self, subs: List[SubstitionsInput]) -> None:
+        self._subs = normalize_list(subs)
+
+    def describe(self) -> Text:
+        return "ConcatenatedPathsSubstitution({})".format(
+            "+".join([s.describe() for s in self._subs])
+        )
+
+    def perform(self, context: LaunchContext) -> Text:
+        return ":".join([s.perform(context) for s in self._subs])
