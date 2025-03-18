@@ -25,7 +25,7 @@ function(setup_project_watcher)
 
   # Process folders arguments
   if (ARG_FOLDERS)
-    set(_watcher_folders "-fwl;${ARG_FOLDERS}")
+    set(_watcher_folders "-fwl ${ARG_FOLDERS}")
   endif()
 
   # Whether we want the watcher to log

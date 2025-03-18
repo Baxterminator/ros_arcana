@@ -1,15 +1,16 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>arcana_cmake</name>
+  <name>arcana_gazebo</name>
   <version>0.1.0</version>
-  <description>CMake toolkit aiming to ease ROS projects compilation</description>
-
+  <description>Toolkit aiming to provide out of-the-box tools for working with gazebo</description>
   <maintainer email="contact@meltwin.fr">Geoffrey Côte</maintainer>
   <author email="contact@meltwin.fr">Geoffrey Côte</author>
-
+  
   <url type="repository">https://github.com/Baxterminator/ros_arcana</url>
   <license>MIT</license>
+
+  <depend>arcana_cmake</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

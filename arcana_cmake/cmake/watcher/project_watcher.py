@@ -4,7 +4,8 @@ import os
 from sys import stderr
 from typing import List
 import datetime
-import sys
+
+DEFAULT_BLACKLIST = ["build"]
 
 
 def read_file_list(log_path: str) -> List[str]:
