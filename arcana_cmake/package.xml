@@ -5,8 +5,8 @@
   <version>0.1.0</version>
   <description>CMake toolkit aiming to ease ROS projects compilation</description>
 
-  <maintainer email="contact@meltwin.fr">Geoffrey Côte</maintainer>
-  <author email="contact@meltwin.fr">Geoffrey Côte</author>
+  <maintainer email="github@meltwin.fr">Geoffrey Côte</maintainer>
+  <author email="github@meltwin.fr">Geoffrey Côte</author>
 
   <url type="repository">https://github.com/Baxterminator/ros_arcana</url>
   <license>MIT</license>
