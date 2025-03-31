@@ -26,10 +26,12 @@ def include_launch_file(
     launch_args: (
         Iterable[Tuple[SomeSubstitutionsType, SomeSubstitutionsType]] | None
     ) = None,
+    **kwargs,
 ) -> IncludeLaunchDescription:
     return IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             os.path.join(get_package_share_directory(pkg), *file.split("/"))
         ),
         launch_arguments=launch_args,
+        **kwargs,
     )
