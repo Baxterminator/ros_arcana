@@ -20,33 +20,43 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-function(check_raspberry_pi)
-  exec_program("cat /proc/cpuinfo | grep model -i -m 2" OUTPUT_VARIABLE cpu_output)
-  string(FIND ${cpu_output} "Raspberry" has_raspberry)
+find_package(ament_cmake_auto)
+include("${CMAKE_CURRENT_LIST_DIR}/../utils/simple.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/../utils/files.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/../utils/display.cmake")
 
-  # Found a raspberry, fetching data
-  if(NOT ${has_raspberry} EQUAL -1)
-    set(IS_RASPBERRY YES PARENT_SCOPE)
+function(arcana_install_include)
+  cmake_parse_arguments(_FUNC_ARG "NO_PROJECT_NAME" "" "TOP_DIRS;DIRS" ${ARGN})
 
-    # Fetch raspberry pi model
-    string(REGEX MATCH "(Raspberry.+$)" model_name ${cpu_output})
-    set(RASPBERRY_MODEL ${model_name} PARENT_SCOPE)
-
-  # Not a raspberry, still fetch the data of the CPU
-  else()
-    set(IS_RASPBERRY NO PARENT_SCOPE)
-
-    # Fetch CPU Model
-    string(REGEX MATCH "([mM]odel [nN]ame)" has_model_name ${cpu_output})
-    if(has_model_name)
-      string(REGEX MATCH "[mM]odel [nN]ame.+: .+" model_name ${cpu_output})
-      string(REGEX REPLACE "[mM]odel [nN]ame.+: " "" model_name ${model_name})
+  # Macro to register the found include directories
+  dispSection("Exporting includes directory" PARENT)
+  set(includes_dir "")
+  macro(register_include directory)
+    if (_FUNC_ARG_NO_PROJECT_NAME)
+      set(include_name ${directory})
     else()
-      string(REGEX MATCH "[mM]odel.+:.+\n" model_name ${cpu_output})
-      string(REGEX REPLACE "[mM]odel.+: " "" model_name ${model_name})
+      set(include_name "${directory}/${PROJECT_NAME}")
     endif()
-    string(STRIP ${model_name} model_name)
-  endif()
+    dispLine("Registering include directory ${include_name}")
+    list(APPEND includes_dir ${include_name})
+  endmacro()
 
-  set(CPU_MODEL ${model_name} PARENT_SCOPE)
+  # Fetch all directories in top_dirs
+  foreach (top_dir ${_FUNC_ARG_TOP_DIRS})
+    file(GLOB inner_dirs LIST_DIRECTORIES true "${top_dir}/*")
+    foreach(dir ${inner_dirs})
+      register_include(${dir})
+    endforeach()
+  endforeach()
+
+  # Fetch all regular include directories
+  foreach(dir ${_FUNC_ARG_DIRS})
+    register_include(${dir})
+  endforeach()
+  
+  # Fetch all manual include directories
+  install(
+    DIRECTORY ${includes_dir}
+    DESTINATION include/${PROJECT_NAME}
+)
 endfunction()

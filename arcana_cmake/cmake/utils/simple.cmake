@@ -20,15 +20,12 @@
 # ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 # THE SOFTWARE.
 
-macro(fetch_system_info)
-  cmake_parse_arguments(ARG "DISPLAY" "" "" ${ARGN})
-  # Process
-  check_raspberry_pi()
-
-  # Display
-  if(ARG_DISPLAY)
-    message("System: ${CMAKE_SYSTEM} (cpu_arch=${CMAKE_SYSTEM_PROCESSOR})")
-    message("Is a Raspberry System: ${IS_RASPBERRY}")
-    message("CPU Model: ${CPU_MODEL}")
+# Test whether the cond value is empty or true
+# Set out to true_val if the condition above is fulfilled, false_val otherwise.
+function(ternary out cond true_val false_val)
+  if ("${cond}" STREQUAL "" OR ${cond})
+    set(${out} ${true_val} PARENT_SCOPE)
+  else()
+    set(${out} ${false_val} PARENT_SCOPE)
   endif()
-endmacro()
+endfunction()

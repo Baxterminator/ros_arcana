@@ -1,6 +1,6 @@
-# Copyright (C) 2024-2024 by Meltwin
+# Copyright (C) 2024-2025 by Meltwin
 # Authors:
-#   Geoffrey Côte: geoffrey.cote@centraliens-nantes.org
+#   Geoffrey Côte: github@meltwin.fr
 
 # The MIT License (MIT)  https://mit-license.org/
 
@@ -26,7 +26,6 @@ macro(arcana_package)
     cmake_parse_arguments(ARG "" "" "" ${ARGN})
 
     make_extras_file()
-    get_ros_version()
 
     ament_auto_package(
         CONFIG_EXTRAS ${ARCANA_${PROJECT_NAME}_EXTRA_CMAKE_PATH}

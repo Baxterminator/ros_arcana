@@ -1,6 +1,6 @@
-# Copyright (C) 2024-2024 by Meltwin
+# Copyright (C) 2024-2025 by Meltwin
 # Authors:
-#   Geoffrey Côte: geoffrey.cote@centraliens-nantes.org
+#   Geoffrey Côte: github@meltwin.fr
 
 # The MIT License (MIT)  https://mit-license.org/
 
@@ -46,10 +46,10 @@ macro(register_messages)
     if (${PROJEC_NAME}_msg_files)
         dispSection("Generating custom messages interfaces")
         foreach(msg ${${PROJEC_NAME}_msg_files})
-            message("\t- Found message \"${msg}\"")
+            dispLine("Found message \"${msg}\"")
         endforeach()
         rosidl_generate_interfaces("${PROJECT_NAME}" ${${PROJEC_NAME}_msg_files} DEPENDENCIES ${${PROJECT_NAME}_msg_deps})
-        rosidl_get_typesupport_target(${PROJECT_NAME}_CUSTOM_MSGS_LIB "${PROJECT_NAME}"  "rosidl_typesupport_cpp")
+        rosidl_get_typesupport_target(${PROJECT_NAME}_CUSTOM_MSGS_LIB "${PROJECT_NAME}" "rosidl_typesupport_cpp")
     else()
         dispSection("No messages to generate interface for")
     endif()

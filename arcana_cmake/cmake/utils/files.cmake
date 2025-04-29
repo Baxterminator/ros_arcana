@@ -1,6 +1,6 @@
-# Copyright (C) 2024-2024 by Meltwin
+# Copyright (C) 2024-2025 by Meltwin
 # Authors:
-#   Geoffrey Côte: geoffrey.cote@centraliens-nantes.org
+#   Geoffrey Côte: github@meltwin.fr
 
 # The MIT License (MIT)  https://mit-license.org/
 
@@ -26,3 +26,49 @@ macro(foreach_file_exist file)
     continue()
   endif()
 endmacro()
+
+# Fetch the files with the given extensions from both directories and given 
+# files and gather them in one variable.
+function(arcana_fetch_files out)
+  cmake_parse_arguments(_FUNC_ARG "NO_EXT" "" "DIRS;FILES;EXTS" ${ARGN})
+  set(src_files "")
+
+  # Create macro to generate file globing
+  macro(reset_filter)
+    set(glob_filter "")
+  endmacro()
+  macro(create_filter d)
+    reset_filter()
+    if (_FUNC_ARG_NO_EXT)
+      set(glob_filter "${d}/**")
+    else()
+      foreach(e ${_FUNC_ARG_EXTS})
+        list(APPEND glob_filter "${d}/**${e}")
+      endforeach()
+    endif()
+  endmacro()
+  
+  # Fetch from directories
+  foreach(dir ${_FUNC_ARG_DIRS})
+    create_filter(${dir})
+    file(GLOB_RECURSE dir_sources LIST_DIRECTORIES false RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} ${glob_filter})
+    list(APPEND src_files ${dir_sources})
+  endforeach()
+
+  # Add files
+  list(APPEND src_files ${_FUNC_ARG_FILES})
+
+  # Return to parent
+  set(${out} ${src_files} PARENT_SCOPE)
+endfunction()
+
+# Fetch the sources from both directories and given files and gather them in
+# one variable.
+function(arcana_fetch_sources out)
+  cmake_parse_arguments(_FUNC_ARG "" "" "" ${ARGN})
+  arcana_fetch_files(src_files 
+    ${_FUNC_ARG_UNPARSED_ARGUMENTS}
+    EXTS ".cpp" ".c" ".cxx"
+  )
+  set(${out} ${src_files} PARENT_SCOPE)
+endfunction()

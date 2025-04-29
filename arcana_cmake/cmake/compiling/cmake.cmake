@@ -1,6 +1,6 @@
-# Copyright (C) 2024-2024 by Meltwin
+# Copyright (C) 2024-2025 by Meltwin
 # Authors:
-#   Geoffrey Côte: geoffrey.cote@centraliens-nantes.org
+#   Geoffrey Côte: github@meltwin.fr
 
 # The MIT License (MIT)  https://mit-license.org/
 
