@@ -1,0 +1,111 @@
+#!/usr/bin/python3
+
+from rclpy import shutdown, init, ok, spin_once
+from rclpy.node import Node
+from rclpy.time import Time
+
+
+class IGenerator:
+
+    def __init__(self, bias: float, range: float, duty_cycle: float, frequency: float):
+        self._bias = bias
+        self._range = range
+        self._duty_cycle = duty_cycle
+        self._freq = frequency
+        self._period = 1.0 / self._freq
+
+    @staticmethod
+    def __convert_time(t: Time) -> float:
+        return t.nanoseconds * 1e-9
+
+    def compute(self, t: Time) -> float:
+        return self._compute(IGenerator.__convert_time(t))
+
+    def _compute(self, t: float) -> float:
+        return 0.0
+
+
+class SquareGenerator(IGenerator):
+
+    def _compute(self, t: float) -> float:
+        cycle_t = t % self._period
+        if cycle_t <= self._period * self._duty_cycle:
+            return self._bias + self._range / 2
+        return self._bias - self._range / 2
+
+
+class SignalGenerator(Node):
+    """
+    ROS2 Node that acts like a signal generator.
+    """
+
+    def __init__(self):
+        super().__init__("signal")
+
+        # Declare signal generator parameters
+        self._gen_args = {
+            "bias": self.declare_parameter("bias", 0.0)
+            .get_parameter_value()
+            .double_value,
+            "range": self.declare_parameter("range", 1.0)
+            .get_parameter_value()
+            .double_value,
+            "duty_cycle": self.declare_parameter("duty_cycle", 0.6)
+            .get_parameter_value()
+            .double_value,
+            "frequency": self.declare_parameter("frequency", 10.0)
+            .get_parameter_value()
+            .double_value,
+        }
+        self._sigtype = (
+            self.declare_parameter("type", "square").get_parameter_value().string_value
+        )
+        self.generator = self.__initialize_generator()
+
+        # Declare node parameter
+        self.value = 0
+        self._out_type = (
+            self.declare_parameter("out_type", "std_msgs.msg.Float64.data")
+            .get_parameter_value()
+            .string_value
+        )
+        self._out_freq = (
+            self.declare_parameter("out_freq", 50.0).get_parameter_value().double_value
+        )
+        self.__initialize_output()
+
+    def __initialize_generator(self) -> IGenerator:
+        match self._sigtype:
+            case "square":
+                return SquareGenerator(**self._gen_args)
+            case _:
+                self.get_logger().error(f"No signal generator of type {self._sigtype}")
+                exit(-1)
+
+    def __initialize_output(self) -> None:
+        split_type = self._out_type.split(".")
+        pkg = ".".join(split_type[:2])
+        typ = split_type[2]
+        val = ".".join(split_type[3:])
+
+        # Import the type
+        exec(f"from {pkg} import {typ}")
+        exec(f"self.val = {typ}()")
+        exec(f"self.publisher = self.create_publisher({typ}, 'sig_out', 10)")
+
+        def wrap_publish():
+            self.value = self.generator.compute(self.get_clock().now())
+            exec(f"self.val.{val} = self.value")
+            # if hasattr(self.val, "stamp"):
+            #     self.val.stamp = self.get_clock().now()
+            self.publisher.publish(self.val)
+
+        self.loop = self.create_timer(1.0 / self._out_freq, wrap_publish)  # type: ignore
+
+
+if __name__ == "__main__":
+    init()
+    node = SignalGenerator()
+    while ok():
+        spin_once(node)
+    shutdown()

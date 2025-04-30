@@ -20,4 +20,6 @@ ament_auto_add_executable(tf_analyzer "src/tf_tools/tf_analyzer.cpp")
 target_link_libraries(tf_analyzer fmt::fmt)
 ament_auto_add_executable(tf_publisher "src/tf_tools/tf_publisher.cpp")
 
+arcana_install_programs(DIRS "python")
+
 arcana_package()
