@@ -26,14 +26,20 @@ find_package(ament_cmake_auto)
 # package expose. It will later be packed together inside make_extras_file()
 # then passed to ament through arcana_package().
 function(register_cmake)
-  cmake_parse_arguments(ARG "" "" "FILES;DIRS" ${ARGN})
+  cmake_parse_arguments(ARG "NO_CHECK" "" "FILES;DIRS" ${ARGN})
+
+  if(ARG_NO_CHECK)
+    set(check_exist OFF)
+  else()
+    set(check_exist ON)
+  endif()
 
   if (NOT ARG_FILES AND NOT ARG_DIRS)
     message(SEND_ERROR "No file or directory provided for adding cmake files to the ament stack")
     return()
   endif()
 
-  message("Installing extra cmake files:")
+  dispStep("Installing extra cmake files:")
   set(extras_list ${ARCANA_${PROJECT_NAME}_CMAKE_EXTRAS})
 
   # Install directories
@@ -41,13 +47,13 @@ function(register_cmake)
     foreach(dir ${ARG_DIRS})
       # Check if directory exist and get relative directory path
       if (IS_ABSOLUTE ${dir})
-        if (NOT EXISTS ${dir})
+        if (check_exist AND NOT EXISTS ${dir})
           message(WARNING "Directory ${dir} does not exist!")
           continue()
         endif()
         file(RELATIVE_PATH rel_dir ${CMAKE_CURRENT_LIST_DIR} ${dir})
       else()
-        if (NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/${dir}")
+        if (check_exist AND NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/${dir}")
           message(WARNING "Directory ${dir} does not exist!")
           continue()
         endif()
@@ -64,7 +70,7 @@ function(register_cmake)
         endif()
 
         # Install file
-        message("  -> Found file ${file}")
+        dispLine("Found file ${file}")
         get_filename_component(file_dir ${file} DIRECTORY)
         install(
           FILES "${rel_dir}/${file}"
@@ -79,12 +85,12 @@ function(register_cmake)
     foreach(file ${ARG_FILES})
       # Check if file exist
       if (IS_ABSOLUTE ${file})
-        if (NOT EXISTS ${file})
+        if (check_exist AND NOT EXISTS ${file})
           message(WARNING "File ${file} does not exist!")
           continue()
         endif()
       else()
-        if (NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/${file}")
+        if (check_exist AND NOT EXISTS "${CMAKE_CURRENT_LIST_DIR}/${file}")
           message(WARNING "File ${file} does not exist!")
           continue()
         endif()
@@ -92,12 +98,12 @@ function(register_cmake)
 
       # Test if cmake file
       string(FIND ${file} ".cmake" is_cmake_file)
-      if(${is_cmake_fime} GREATER -1)
+      if(${is_cmake_file} GREATER -1)
         list(APPEND extras_list ${file})
       endif()
 
       # Install file
-      message("  -> Found file ${file}")
+      dispLine("Found file ${file}")
       install(
         FILES "${file}"
         DESTINATION share/${PROJECT_NAME}/cmake/

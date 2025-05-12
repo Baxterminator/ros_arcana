@@ -12,6 +12,8 @@
   <license>MIT</license>
 
   <depend>rclcpp</depend>
+  <depend>lifecycle_msgs</depend>
+  <depend>arcana_cmake</depend>
 
   <export>
     <build_type>ament_cmake</build_type>
