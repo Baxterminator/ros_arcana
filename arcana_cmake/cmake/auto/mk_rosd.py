@@ -165,7 +165,7 @@ class CMakeGenerator(MappingGenerator):
                 first = False
             else:
                 self._f.write(f"  elseif")
-            self._f.write(f' (${{v}} STREQUAL "{key}")\n')
+            self._f.write(f' ("${{v}}" STREQUAL "{key}")\n')
             self._f.write(f"    set(${{out}} ${{ROSD_{key.upper()}}} PARENT_SCOPE)\n")
             self._f.write(f"    return()\n")
         self._f.write("  else()\n")
@@ -316,38 +316,56 @@ class ROSD_Export:
         _args = self._parser.parse_args()
 
         # Assign parameters
-        self.lang: Literal["cmake", "cpp", "py"] = _args.lang
-        self.out: str = _args.out
-        self.ns: str = _args.namespace
-        self.files.mappings = _args.mapping
-        self.files.licence = _args.licence
+        self.command: Literal["get", "exp"] = _args.command
+
+        # Get arguments
+        if self.command == "get":
+            self.semantic: str = _args.v
+
+        # Export arguments
+        if self.command == "exp":
+            self.lang: Literal["cmake", "cpp", "py"] = _args.lang
+            self.out: str = _args.out
+            self.ns: str = _args.namespace
+            self.files.mappings = _args.mapping
+            self.files.licence = _args.licence
 
     def _parse_args(self):
         """
         Declare and parse the program arguments
         """
-        self._parser.add_argument(
+        self._subparsers = self._parser.add_subparsers(dest="command")
+
+        # Get subparser
+        self._get_parser = self._subparsers.add_parser("get")
+        self._get_parser.add_argument(
+            "v", help="The semantic version to transform in int version"
+        )
+
+        # export subparser
+        self._export_parser = self._subparsers.add_parser("exp")
+        self._export_parser.add_argument(
             "lang",
             choices=["cmake", "cpp", "py"],
             help="The language in which to export the ROS distro mappings",
         )
-        self._parser.add_argument(
+        self._export_parser.add_argument(
             "out",
             help="The path to the out file",
         )
-        self._parser.add_argument(
+        self._export_parser.add_argument(
             "-m",
             dest="mapping",
             help="The path to the YAML mapping file",
             default="./rosdistros.yaml",
         )
-        self._parser.add_argument(
+        self._export_parser.add_argument(
             "-l",
             dest="licence",
             help="The path to the licence file",
             default="",
         )
-        self._parser.add_argument(
+        self._export_parser.add_argument(
             "--ns",
             dest="namespace",
             help="The namespace for the constants",
@@ -414,16 +432,19 @@ class ROSD_Export:
 
 if __name__ == "__main__":
     exporter = ROSD_Export()
-    print(f"Exporting file to {exporter.out}")
-    # Try to load ros distro mappings
-    if not exporter.import_mappings():
-        exit(-1)
-
-    # Export it in the right language
-    match exporter.lang:
-        case "cmake":
-            exporter.export_mappings(CMakeGenerator())
-        case "cpp":
-            exporter.export_mappings(CPPGenerator())
-        case "py":
-            exporter.export_mappings(PythonGenerator())
+    match exporter.command:
+        case "get":
+            print(MappingGenerator.version_as_int(exporter.semantic), end="")
+        case "exp":
+            print(f"Exporting file to {exporter.out}")
+            # Try to load ros distro mappings
+            if not exporter.import_mappings():
+                exit(-1)
+            # Export it in the right language
+            match exporter.lang:
+                case "cmake":
+                    exporter.export_mappings(CMakeGenerator())
+                case "cpp":
+                    exporter.export_mappings(CPPGenerator())
+                case "py":
+                    exporter.export_mappings(PythonGenerator())

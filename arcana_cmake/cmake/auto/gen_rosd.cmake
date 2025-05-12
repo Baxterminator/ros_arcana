@@ -27,12 +27,25 @@ function(arcana_autogen_rosd)
     ${PROJECT_NAME}_rosd_${_FUNC_ARG_LANG}
     ALL
     BYPRODUCTS ${_FUNC_ARG_BUILD_FILE}
+    DEPENDS 
+        "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/rosdistros.yaml" 
+        "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/licence.txt"
     COMMAND python3 "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/mk_rosd.py" 
+        exp
         ${_FUNC_ARG_LANG}  
         "${_FUNC_ARG_BUILD_FILE}" 
         -m "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/rosdistros.yaml"
         -l "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/licence.txt"
   )
+endfunction()
+
+function(arcana_rosd_int v out)
+  cmake_parse_arguments(_FUNC_ARG "" "" "" ${ARGN})
+  execute_process(
+    COMMAND python3 "${CMAKE_CURRENT_FUNCTION_LIST_DIR}/mk_rosd.py" get ${v}
+    OUTPUT_VARIABLE stdout
+  )
+  set(${out} ${stdout} PARENT_SCOPE)
 endfunction()
 
 function(arcana_autogen_rosd_cmake)
