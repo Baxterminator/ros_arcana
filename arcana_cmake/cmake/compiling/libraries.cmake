@@ -27,8 +27,8 @@ include("${CMAKE_CURRENT_LIST_DIR}/../utils/display.cmake")
 
 # This function lets user define library through ament while being able to export them
 # for other packages usage.
-function(arcana_add_library _target)
-  cmake_parse_arguments(ARG "STATIC;AUTO" "DIR;NAMESPACE" "FILES;INCLUDE;DEPS" ${ARGN})
+macro(arcana_add_library _target)
+  cmake_parse_arguments(ARG "STATIC;AUTO" "DIR;NAMESPACE" "FILES;INCLUDE;DEPS;AMENT_DEPS" ${ARGN})
 
   # Whether we generate a static or shared library
   set(link_type "PUBLIC")
@@ -55,34 +55,25 @@ function(arcana_add_library _target)
   # Declare library
   dispStep("Declaring ${lib_type} library \"${_target}\"")
 
-  dispLine("Linking libraries / includes")
   if (ARG_AUTO)
+    dispLine("Linking libraries / includes (AMENT_AUTO)")
     ament_auto_add_library(${_target} ${lib_type} ${lib_src})
     target_link_libraries(${_target} ${ARG_DEPS} ${${PROJECT_NAME}_CUSTOM_MSGS_LIB})
     target_include_directories(${_target} ${link_type} ${ARG_INCLUDE})
   else()
+    dispLine("Linking libraries / includes (ARCANA)")
     add_library(${_target} ${lib_type} ${lib_src})
-    ament_target_dependencies(${_target} SYSTEM ${${PROJECT_NAME}_FOUND_BUILD_DEPENDS})
-    target_link_libraries(${_target} ${ARG_DEPS} ${${PROJECT_NAME}_CUSTOM_MSGS_LIB})
-    target_include_directories(${_target} ${link_type} ${ARG_INCLUDE})
+    target_link_libraries(${_target}  ${ARG_DEPS} ${${PROJECT_NAME}_CUSTOM_MSGS_LIB})
+    target_include_directories(${_target} ${link_type} 
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/${ARG_INCLUDE}>
+      $<INSTALL_INTERFACE:>
+    )
+    ament_target_dependencies(${_target} SYSTEM ${ARG_AMENT_DEPS})
+
+    # Export the library
     list(APPEND ${PROJECT_NAME}_LIBRARIES ${_target})
   endif()
-
-  # Export the library
-  if(NOT ${lib_type} STREQUAL "INTERFACE")
-    dispLine("Exporting library")
-    install(
-      TARGETS ${_target} EXPORT ${_target}
-      ARCHIVE DESTINATION lib
-      LIBRARY DESTINATION lib
-    )
-    ament_export_libraries(${_target})
-    ament_export_targets(${_target} HAS_LIBRARY_TARGET NAMESPACE ${ARG_NAMESPACE})
-  endif()
-
-  # Add to the package's library register
-  set(${PROJECT_NAME}_LIBRARIES ${${PROJECT_NAME}_LIBRARIES} PARENT_SCOPE)
-endfunction()
+endmacro()
 
 # Wrapper around the arcana_add_library to add all project dependencies
 function(arcana_auto_add_library _target)

@@ -25,7 +25,7 @@ include("${CMAKE_CURRENT_LIST_DIR}/../utils/files.cmake")
 include("${CMAKE_CURRENT_LIST_DIR}/../utils/display.cmake")
 
 function(arcana_add_executable _target)
-  cmake_parse_arguments(ARG "AUTO" "DIR" "FILES;INCLUDE;DEPS" ${ARGN})
+  cmake_parse_arguments(ARG "AUTO" "DIR" "FILES;INCLUDE;DEPS;AMENT_DEPS" ${ARGN})
 
   # Get executable sources
   # If no source files found, make the library an interface instead
@@ -44,7 +44,7 @@ function(arcana_add_executable _target)
   else()
     add_executable(${_target}  ${exe_src})
     dispLine("Linking libraries / includes")
-    ament_target_dependencies(${_target} SYSTEM ${${PROJECT_NAME}_FOUND_BUILD_DEPENDS})
+    ament_target_dependencies(${_target} SYSTEM ${ARG_AMENT_DEPS})
     target_link_libraries(${_target} ${ARG_DEPS} ${${PROJECT_NAME}_CUSTOM_MSGS_LIB})
     target_include_directories(${_target} PUBLIC ${ARG_INCLUDE})
     list(APPEND ${PROJECT_NAME}_EXECUTABLES ${_target})

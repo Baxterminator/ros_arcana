@@ -37,7 +37,7 @@ function(arcana_install_include)
     else()
       set(include_name "${directory}/${PROJECT_NAME}")
     endif()
-    dispLine("Registering include directory ${include_name}")
+    dispStep("Registering include directory ${include_name}")
     list(APPEND includes_dir ${include_name})
   endmacro()
 
