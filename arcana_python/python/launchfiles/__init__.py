@@ -13,4 +13,10 @@ from .xacro import XacroCommand, setup_xacro_object, xacro_object
 from ._gen import include_launch_file
 from .gazebo import setup_custom_gazebo_models
 from .ros import ROSD, ROS
-from .conditions import ANDConditions, ORCondition, XORCondition, NotCondition
+from .conditions import (
+    ANDConditions,
+    ORCondition,
+    XORCondition,
+    NotCondition,
+    TernaryValue,
+)

@@ -10,6 +10,7 @@
 # =============================================================================
 from launch import LaunchContext
 from launch.condition import Condition
+from launch.substitution import Substitution
 from .__utils import SubstitionsListInput, SubstitionsInput, normalize
 from launch.conditions import IfCondition, evaluate_condition_expression
 from typing import List, Iterable, Text
@@ -158,3 +159,42 @@ class NotCondition(Condition):
     def describe(self) -> Text:
         """Return a description of this Condition."""
         return self.__repr__()
+
+
+# =============================================================================
+# Ternary value substitution
+# =============================================================================
+class TernaryValue(Substitution):
+    """
+    Special substitution that act upon a condition value.
+
+    If the condition is true, performs the true_value argument.
+    Otherwise, performs the false_value argument.
+    """
+
+    def __init__(
+        self,
+        cond: ConditionInput,
+        true_value: SubstitionsInput,
+        false_value: SubstitionsInput,
+    ) -> None:
+        super().__init__()
+
+        # Normalize values for this substitution
+        self._condition = normalize_condition(cond)
+        self._true_val = normalize(true_value)
+        self._false_val = normalize(false_value)
+
+    def perform(self, context: LaunchContext) -> Text:
+        """
+        Perform the substitution
+
+        Args:
+            context (LaunchContext): the context of the launch
+
+        Returns:
+            Text: the result of the substitution
+        """
+        if self._condition.evaluate(context):
+            return self._true_val.perform(context)
+        return self._false_val.perform(context)

@@ -15,7 +15,6 @@ from typing import List, Text
 
 from ament_index_python import get_package_share_directory
 from launch import LaunchContext, Substitution
-from launch.substitutions import TextSubstitution
 
 from .__utils import SubstitionsInput, normalize, normalize_list
 
