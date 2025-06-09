@@ -34,9 +34,7 @@ class TextConcat(Substitution):
         self._sep = separator
 
     def perform(self, context: LaunchContext) -> str:
-        out = ""
-        self._sep.join([x.perform(context) for x in self._substitutions])
-        return out
+        return self._sep.join([x.perform(context) for x in self._substitutions])
 
 
 class AdvPathSubstitution(Substitution):
