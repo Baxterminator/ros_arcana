@@ -8,7 +8,7 @@
 # This python file gather several methods useful to write path in launch files.
 # =============================================================================
 # Package imports
-from .path import AdvPathSubstitution
+from .substitutions import AdvPathSubstitution
 from .__utils import normalize, SubstitionsInput
 
 # Standard python import

@@ -9,7 +9,7 @@
 # commands in launch files.
 # =============================================================================
 
-from .path import ConcatenatedPathsSubstitution
+from .substitutions import ConcatenatedPathsSubstitution
 from .__utils import normalize_list
 
 from launch import LaunchDescription, Substitution
