@@ -18,10 +18,10 @@ from .conditions import (
     ORCondition,
     XORCondition,
     NotCondition,
-    TernaryValue,
 )
 from .substitutions import (
     TextConcat,
     AdvPathSubstitution,
     ConcatenatedPathsSubstitution,
+    TernaryValue,
 )

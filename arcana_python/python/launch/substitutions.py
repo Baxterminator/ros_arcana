@@ -11,8 +11,16 @@
 from launch import LaunchContext
 from launch.substitution import Substitution
 from typing import Text, List
+
+from .__utils import (
+    SubstitionsInput,
+    SubstitionsListInput,
+    normalize_list,
+    normalize,
+    ConditionInput,
+    normalize_condition,
+)
 from .path import PathUtils
-from .__utils import SubstitionsInput, SubstitionsListInput, normalize_list, normalize
 
 
 class TextConcat(Substitution):
@@ -69,3 +77,39 @@ class ConcatenatedPathsSubstitution(Substitution):
 
     def perform(self, context: LaunchContext) -> Text:
         return ":".join([s.perform(context) for s in self._subs])
+
+
+class TernaryValue(Substitution):
+    """
+    Special substitution that act upon a condition value.
+
+    If the condition is true, performs the true_value argument.
+    Otherwise, performs the false_value argument.
+    """
+
+    def __init__(
+        self,
+        cond: ConditionInput,
+        true_value: SubstitionsInput,
+        false_value: SubstitionsInput,
+    ) -> None:
+        super().__init__()
+
+        # Normalize values for this substitution
+        self._condition = normalize_condition(cond)
+        self._true_val = normalize(true_value)
+        self._false_val = normalize(false_value)
+
+    def perform(self, context: LaunchContext) -> Text:
+        """
+        Perform the substitution
+
+        Args:
+            context (LaunchContext): the context of the launch
+
+        Returns:
+            Text: the result of the substitution
+        """
+        if self._condition.evaluate(context):
+            return self._true_val.perform(context)
+        return self._false_val.perform(context)

@@ -9,8 +9,13 @@
 # =============================================================================
 
 from typing import Iterable, List
-from launch import Substitution
+from launch import Substitution, Condition
+from launch.conditions import IfCondition
 from launch.substitutions import TextSubstitution
+
+# =============================================================================
+# SUBSTITUTIONS
+# =============================================================================
 
 SubstitionsInput = Substitution | str
 SubstitionsListInput = Iterable[SubstitionsInput] | SubstitionsInput | None
@@ -51,3 +56,47 @@ def normalize_list(x: SubstitionsListInput) -> List[Substitution]:
     if isinstance(x, Iterable):
         return [normalize(s) for s in x]
     return [normalize(x)]
+
+
+# =============================================================================
+# CONDITIONS
+# =============================================================================
+
+ConditionInput = Condition | SubstitionsInput
+ConditionListInput = Condition | Iterable[Condition] | SubstitionsListInput
+
+
+def normalize_condition(l: ConditionInput) -> Condition:
+    """
+    Normalize the input as a conditions to be run on
+
+    Args:
+        l (ConditionInput): a mixed type input to process
+
+    Returns:
+        Condition: a proper condition to evaluate
+    """
+
+    # Take care of the None input
+    if isinstance(l, Condition):
+        return l
+    else:
+        return IfCondition(normalize(l))
+
+
+def normalize_condition_list(l: ConditionListInput) -> List[Condition]:
+    """
+    Normalize the input list as a list of conditions to be run on
+
+    Args:
+        l (ConditionListInput): a list of mixed inputs to process
+
+    Returns:
+        List[Condition]: a list of conditions to evaluate
+    """
+    # Take care of the None input
+    if l is None:
+        return []
+    elif isinstance(l, Iterable):
+        return [normalize_condition(x) for x in l]
+    return [normalize_condition(l)]

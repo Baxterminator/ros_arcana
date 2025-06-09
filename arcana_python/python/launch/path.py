@@ -9,14 +9,9 @@
 # =============================================================================
 
 from enum import Enum
-import sys
 import os
-from typing import List, Text
 
 from ament_index_python import get_package_share_directory
-from launch import LaunchContext, Substitution
-
-from .__utils import SubstitionsInput, normalize, normalize_list
 
 
 # =============================================================================
@@ -101,9 +96,3 @@ class PathUtils:
             case PathUtils.PathClass.PACKAGE_PATH:
                 return PathUtils.package2realpath(path)
         return ""
-
-
-# =============================================================================
-#   Substitutions
-# =============================================================================
-
