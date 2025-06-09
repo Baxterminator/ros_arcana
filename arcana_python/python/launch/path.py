@@ -106,41 +106,4 @@ class PathUtils:
 # =============================================================================
 #   Substitutions
 # =============================================================================
-class AdvPathSubstitution(Substitution):
-    """
-    Substitution that perform an advanced path lookup.
-    It accepts:
-        - absolute path: /root_dir/.../object.ext
-        - relative path: local_dir/.../object.ext
-        - package  path: my_pkg::share_subdir/.../object.ext
 
-    Args:
-        substitution (Substitution | str): the path to the world file
-    """
-
-    def __init__(self, substitution: SubstitionsInput) -> None:
-        self._substitution = normalize(substitution)
-
-    def describe(self) -> Text:
-        return "AdvPathSubstitution({})".format(self._substitution.describe())
-
-    def perform(self, context: LaunchContext) -> str:
-        return PathUtils.get_object_path(self._substitution.perform(context))
-
-
-class ConcatenatedPathsSubstitution(Substitution):
-    """
-    Substitution that concatenate several paths in one PATH-like string.
-    All of the paths while be wrapped around AdvPathSubstitution objects
-    """
-
-    def __init__(self, subs: List[SubstitionsInput]) -> None:
-        self._subs = normalize_list(subs)
-
-    def describe(self) -> Text:
-        return "ConcatenatedPathsSubstitution({})".format(
-            "+".join([s.describe() for s in self._subs])
-        )
-
-    def perform(self, context: LaunchContext) -> Text:
-        return ":".join([s.perform(context) for s in self._subs])
