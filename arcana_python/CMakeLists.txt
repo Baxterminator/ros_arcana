@@ -33,5 +33,5 @@ ament_python_install_package(${PROJECT_NAME} PACKAGE_DIR python)
 # Packaging
 # =============================================================================
 dispSection("Packaging everything (ARCANA)")
-setup_project_watcher(DISPLAY)
+# setup_project_watcher(DISPLAY)
 arcana_package()

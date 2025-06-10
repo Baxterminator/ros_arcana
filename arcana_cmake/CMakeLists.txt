@@ -34,5 +34,5 @@ arcana_autogen_rosd_cmake()
 # Packaging everything
 # =============================================================================
 dispSection("Packaging everything (ARCANA)")
-setup_project_watcher(_CUSTOM_ROOT "${CMAKE_CURRENT_LIST_DIR}/cmake" DISPLAY)
+# setup_project_watcher(_CUSTOM_ROOT "${CMAKE_CURRENT_LIST_DIR}/cmake" DISPLAY)
 arcana_package()

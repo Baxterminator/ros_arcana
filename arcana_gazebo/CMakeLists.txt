@@ -22,5 +22,5 @@ foreach(format ${ARUCO_FORMATS})
   )  
 endforeach()
 
-setup_project_watcher(DISPLAY)
+# setup_project_watcher(DISPLAY)
 arcana_package()
