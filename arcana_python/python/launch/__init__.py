@@ -8,11 +8,23 @@
 # This file is the entry point of the arcana_python.launch module
 # =============================================================================
 
+# -----------------------------------------------------------------------------
+# Utils methods for launching ROS
+# -----------------------------------------------------------------------------
 from .path import PathUtils
 from .xacro import XacroCommand, setup_xacro_object, xacro_object
-from ._gen import include_launch_file
 from .gazebo import setup_custom_gazebo_models
 from .ros import ROSD, ROS
+
+# -----------------------------------------------------------------------------
+# Extension of Actions, Conditions and Substitutions
+# -----------------------------------------------------------------------------
+from .actions import (
+    BranchAction,
+    IncludeLaunchFile,
+    IncludeXMLLaunchFile,
+    SetupComponentContainer,
+)
 from .conditions import (
     ANDConditions,
     ORCondition,
@@ -25,3 +37,4 @@ from .substitutions import (
     ConcatenatedPathsSubstitution,
     TernaryValue,
 )
+from .section import new_section

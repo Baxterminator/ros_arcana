@@ -8,9 +8,10 @@
 # This python file extends the default launch conditions possibilities by
 # combining and inversing them.
 # =============================================================================
+from abc import ABC, abstractmethod
 from launch import LaunchContext
 from launch.condition import Condition
-from typing import Text
+from typing import Text, Iterable
 
 from .__utils import (
     ConditionListInput,
@@ -24,14 +25,41 @@ from .__utils import (
 # =============================================================================
 
 
-class ANDConditions(Condition):
+class ExtendableCondition(Condition, ABC):
     """
-    Take several conditions as input and return the AND operation of them.
+    Interface for extandable conditions which support extension
     """
 
     def __init__(self, conditions: ConditionListInput):
         self._conditions = normalize_condition_list(conditions)
         super().__init__(predicate=self._predicate_func)
+
+    @abstractmethod
+    def _predicate_func(self, context: LaunchContext) -> bool:
+        return False
+
+    def describe(self) -> Text:
+        """Return a description of this Condition."""
+        return self.__repr__()
+
+    def extend(self, condition: ConditionListInput) -> "ExtendableCondition":
+        """
+        Create a new ExtendableCondition with additional conditions.
+
+        This prevent too many nested Condition objects.
+        """
+        if isinstance(condition, Iterable):
+            return ANDConditions([*self._conditions, *condition])
+        return ANDConditions([*self._conditions, condition])
+
+
+class ANDConditions(ExtendableCondition):
+    """
+    Take several conditions as input and return the AND operation of them.
+    """
+
+    def __init__(self, conditions: ConditionListInput):
+        super().__init__(conditions)
 
     def _predicate_func(self, context: LaunchContext) -> bool:
         for c in self._conditions:
@@ -39,19 +67,14 @@ class ANDConditions(Condition):
                 return False
         return True
 
-    def describe(self) -> Text:
-        """Return a description of this Condition."""
-        return self.__repr__()
 
-
-class ORCondition(Condition):
+class ORCondition(ExtendableCondition):
     """
     Take several conditions as input and return the OR operation of them.
     """
 
     def __init__(self, conditions: ConditionListInput):
-        self._conditions = normalize_condition_list(conditions)
-        super().__init__(predicate=self._predicate_func)
+        super().__init__(conditions)
 
     def _predicate_func(self, context: LaunchContext) -> bool:
         for c in self._conditions:
@@ -59,12 +82,8 @@ class ORCondition(Condition):
                 return True
         return False
 
-    def describe(self) -> Text:
-        """Return a description of this Condition."""
-        return self.__repr__()
 
-
-class XORCondition(Condition):
+class XORCondition(ExtendableCondition):
     """
     Take several conditions as input and return the XOR operation of them.
 
@@ -79,9 +98,8 @@ class XORCondition(Condition):
     """
 
     def __init__(self, conditions: ConditionListInput, only_one: bool = False):
-        self._conditions = normalize_condition_list(conditions)
         self._only_one = only_one
-        super().__init__(predicate=self._predicate_func)
+        super().__init__(conditions)
 
     def _predicate_func(self, context: LaunchContext) -> bool:
         if self._only_one:
@@ -98,10 +116,6 @@ class XORCondition(Condition):
                 if c.evaluate(context):
                     val = not val
             return val
-
-    def describe(self) -> Text:
-        """Return a description of this Condition."""
-        return self.__repr__()
 
 
 class NotCondition(Condition):

@@ -8,17 +8,20 @@
 # This python file gather several methods useful for the launch module
 # =============================================================================
 
-from typing import Iterable, List
 from launch import Substitution, Condition
 from launch.conditions import IfCondition
 from launch.substitutions import TextSubstitution
+from typing import Iterable, List, Optional, Tuple
+
+from launch_ros.parameters_type import SomeParameters
+from launch_ros.remap_rule_type import SomeRemapRules
 
 # =============================================================================
 # SUBSTITUTIONS
 # =============================================================================
 
 SubstitionsInput = Substitution | str
-SubstitionsListInput = Iterable[SubstitionsInput] | SubstitionsInput | None
+SubstitionsListInput = Iterable[SubstitionsInput] | SubstitionsInput
 
 
 def normalize(x: SubstitionsInput) -> Substitution:
@@ -41,7 +44,22 @@ def normalize(x: SubstitionsInput) -> Substitution:
     )
 
 
-def normalize_list(x: SubstitionsListInput) -> List[Substitution]:
+def normalize_null(x: Optional[SubstitionsInput]) -> Optional[SubstitionsInput]:
+    """
+    Normalizes input argument as Substitution or returns None if input is None.
+
+    Args:
+        inp (SubstitionsInput, optional): the input argument to normalize
+
+    Returns:
+        Optional[Substitution]: the input argument as a substitution, or None if the input is None
+    """
+    if x is None:
+        return None
+    return normalize(x)
+
+
+def normalize_list(x: Optional[SubstitionsListInput]) -> List[Substitution]:
     """
     Normalize input list values as Substitutions
 
@@ -63,7 +81,7 @@ def normalize_list(x: SubstitionsListInput) -> List[Substitution]:
 # =============================================================================
 
 ConditionInput = Condition | SubstitionsInput
-ConditionListInput = Condition | Iterable[Condition] | SubstitionsListInput
+ConditionListInput = Condition | Iterable[ConditionInput] | SubstitionsListInput
 
 
 def normalize_condition(l: ConditionInput) -> Condition:
@@ -84,7 +102,24 @@ def normalize_condition(l: ConditionInput) -> Condition:
         return IfCondition(normalize(l))
 
 
-def normalize_condition_list(l: ConditionListInput) -> List[Condition]:
+def normalize_condition_null(l: Optional[ConditionInput]) -> Optional[Condition]:
+    """
+    Normalize the input as a conditions to be run on. If the input is None then
+    returns None.
+
+    Args:
+        l (ConditionInput, optional): a mixed type input or None to process
+
+    Returns:
+        Optional[Condition]: a proper condition to evaluate or None if the input
+            was None
+    """
+    if l is None:
+        return None
+    return normalize_condition(l)
+
+
+def normalize_condition_list(l: Optional[ConditionListInput]) -> List[Condition]:
     """
     Normalize the input list as a list of conditions to be run on
 
@@ -100,3 +135,12 @@ def normalize_condition_list(l: ConditionListInput) -> List[Condition]:
     elif isinstance(l, Iterable):
         return [normalize_condition(x) for x in l]
     return [normalize_condition(l)]
+
+
+# =============================================================================
+# Others types
+# =============================================================================
+
+LaunchFilesArguments = Optional[
+    Iterable[Tuple[SubstitionsListInput, SubstitionsListInput]]
+]
