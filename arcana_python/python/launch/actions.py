@@ -13,6 +13,7 @@ from enum import Enum
 from launch import (
     Action,
     Condition,
+    Substitution,
     LaunchContext,
     LaunchDescriptionSource,
 )
@@ -29,12 +30,12 @@ from launch.launch_description_sources import (
 from launch.substitutions import LaunchConfiguration
 from launch.launch_description_entity import LaunchDescriptionEntity
 from launch_ros.actions import ComposableNodeContainer
-from typing import List, Optional, Callable, Any, Dict
+from typing import List, Optional, Callable, Any, Dict, Iterable
 
-from .conditions import ANDConditions
-from .substitutions import AdvPathSubstitution
+from .substitutions import AdvPathSubstitution, NamespaceSubstitution, TextConcat
 from .__utils import (
     normalize_null,
+    normalize_list,
     ConditionInput,
     normalize_condition,
     normalize_condition_null,
@@ -42,6 +43,7 @@ from .__utils import (
     SubstitionsListInput,
     LaunchFilesArguments,
 )
+from rclpy.node import expand_topic_name
 
 
 # =============================================================================
@@ -150,16 +152,42 @@ class IncludeXMLLaunchFile(IncludeLaunchFile):
 # =============================================================================
 # Component and container related actions
 # =============================================================================
-class SetupComponentContainer(GroupAction):
+class ComponentContainer(ComposableNodeContainer):
     """
-    This action provide a way to easily setup component container.
+    Short-hand to simplify the use of ComposableNodeContainer.
+    """
 
-    It also defines two launch arguments for this launch file:
-        - "make_container": should the launch file create the container (useful
-            when this launch file is included and the parent launch file already
-            have a container)
-        - "container": the name of the container
-        - "container_ns": the namespace of the container
+    def __init__(
+        self,
+        name: SubstitionsListInput,
+        namespace: SubstitionsListInput = "",
+        condition: Optional[ConditionInput] = None,
+        package: SubstitionsListInput = "rclcpp_components",
+        executable: SubstitionsListInput = "component_container",
+        **kwargs,
+    ):
+        super().__init__(
+            name=name,
+            namespace=namespace,
+            condition=condition,
+            package=package,
+            executable=executable,
+            **kwargs,
+        )
+        self._sub_name = name
+        self._sub_ns = namespace
+
+    def get_container(self) -> Optional[Substitution]:
+        return NamespaceSubstitution(
+            ns=normalize_list(self._sub_ns),
+            name=TextConcat(self._sub_name),
+        )
+
+
+class ContainerConfigurations(GroupAction):
+    """
+    Declare launch arguments for setting a component container from a parent
+    launch file.
     """
 
     class _ConfsName:
@@ -172,23 +200,13 @@ class SetupComponentContainer(GroupAction):
     def __init__(
         self,
         name: SubstitionsListInput,
-        namespace: SubstitionsListInput = "",
-        condition: Optional[ConditionInput] = None,
+        namespace: Optional[SubstitionsListInput] = None,
         prefix: str = "",
-        package: SubstitionsListInput = "rclcpp_components",
-        executable: SubstitionsListInput = "component_container",
-        container_kwargs: Dict[str, Any] = {},
+        condition: Optional[ConditionInput] = None,
+        other_actions: Iterable[Action] = [],
         **kwargs,
     ):
         self._confs = SetupComponentContainer._ConfsName(prefix)
-        self._container = ComposableNodeContainer(
-            name=LaunchConfiguration(self._confs.name),
-            namespace=LaunchConfiguration(self._confs.namespace),
-            package=package,
-            executable=executable,
-            condition=IfCondition(LaunchConfiguration(self._confs.make_container)),
-            **container_kwargs,
-        )
         super().__init__(
             [
                 DeclareLaunchArgument(
@@ -206,14 +224,66 @@ class SetupComponentContainer(GroupAction):
                     default_value=namespace,
                     description="The namespace in which setup the container",
                 ),
-                self._container,
+                *other_actions,
             ],
             condition=normalize_condition_null(condition),
             **kwargs,
         )
 
-    def get_container(self) -> ComposableNodeContainer:
+
+class SetupComponentContainer(ContainerConfigurations):
+    """
+    This action provide a way to easily setup component container.
+
+    It also defines two launch arguments for this launch file:
+        - "make_container": should the launch file create the container (useful
+            when this launch file is included and the parent launch file already
+            have a container)
+        - "container": the name of the container
+        - "container_ns": the namespace of the container
+
+    In the case of needing to declare several containers in the same launch file,
+    these configuration can be prefixed by "\<prefix\>_" via the prefix argument.
+    """
+
+    def __init__(
+        self,
+        name: SubstitionsListInput,
+        namespace: SubstitionsListInput = "",
+        condition: Optional[ConditionInput] = None,
+        prefix: str = "",
+        package: SubstitionsListInput = "rclcpp_components",
+        executable: SubstitionsListInput = "component_container",
+        container_kwargs: Dict[str, Any] = {},
+        **kwargs,
+    ):
+        self._confs = SetupComponentContainer._ConfsName(prefix)
+
+        super().__init__(
+            name=name,
+            namespace=namespace,
+            condition=condition,
+            prefix=prefix,
+            other_actions=[
+                ComponentContainer(
+                    name=LaunchConfiguration(self._confs.name),
+                    namespace=LaunchConfiguration(self._confs.namespace),
+                    package=package,
+                    executable=executable,
+                    condition=IfCondition(
+                        LaunchConfiguration(self._confs.make_container)
+                    ),
+                    **container_kwargs,
+                )
+            ],
+            **kwargs,
+        )
+
+    def get_container(self) -> NamespaceSubstitution:
         """
         Return the initialized node container.
         """
-        return self._container
+        return NamespaceSubstitution(
+            LaunchConfiguration(self._confs.namespace),
+            LaunchConfiguration(self._confs.name),
+        )

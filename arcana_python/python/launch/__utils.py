@@ -44,7 +44,7 @@ def normalize(x: SubstitionsInput) -> Substitution:
     )
 
 
-def normalize_null(x: Optional[SubstitionsInput]) -> Optional[SubstitionsInput]:
+def normalize_null(x: Optional[SubstitionsInput]) -> Optional[Substitution]:
     """
     Normalizes input argument as Substitution or returns None if input is None.
 
@@ -80,8 +80,8 @@ def normalize_list(x: Optional[SubstitionsListInput]) -> List[Substitution]:
 # CONDITIONS
 # =============================================================================
 
-ConditionInput = Condition | SubstitionsInput
-ConditionListInput = Condition | Iterable[ConditionInput] | SubstitionsListInput
+ConditionInput = Condition | SubstitionsInput | bool
+ConditionListInput = ConditionInput | Iterable[ConditionInput]
 
 
 def normalize_condition(l: ConditionInput) -> Condition:
@@ -98,6 +98,8 @@ def normalize_condition(l: ConditionInput) -> Condition:
     # Take care of the None input
     if isinstance(l, Condition):
         return l
+    elif type(l) is bool:
+        return IfCondition(str(l))
     else:
         return IfCondition(normalize(l))
 

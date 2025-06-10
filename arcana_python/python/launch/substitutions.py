@@ -37,6 +37,15 @@ class TextConcat(Substitution):
         return self._sep.join([x.perform(context) for x in self._substitutions])
 
 
+class NamespaceSubstitution(TextConcat):
+    """
+    Create a namespaced node name or topic
+    """
+
+    def __init__(self, ns: SubstitionsListInput, name: SubstitionsInput):
+        super().__init__(subs=["", *normalize_list(ns), name], separator="/")
+
+
 class AdvPathSubstitution(Substitution):
     """
     Substitution that perform an advanced path lookup.

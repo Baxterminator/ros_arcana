@@ -16,7 +16,7 @@ from typing import Optional, Iterable, Any, Callable, Dict
 
 from .actions import IncludeLaunchFile, LaunchType, SetupComponentContainer
 from .conditions import ANDConditions, ExtendableCondition
-from .substitutions import AdvPathSubstitution
+from .substitutions import AdvPathSubstitution, NamespaceSubstitution
 from .__utils import (
     SubstitionsInput,
     SubstitionsListInput,
@@ -154,7 +154,7 @@ class new_section:
         executable: Optional[SubstitionsListInput] = None,
         container_kwargs: Dict[str, Any] = {},
         **kwargs,
-    ) -> ComposableNodeContainer:
+    ) -> NamespaceSubstitution:
         """
         Setup a new container in this section and apply .
         """
