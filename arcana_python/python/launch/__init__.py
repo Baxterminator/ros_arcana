@@ -26,6 +26,7 @@ from .actions import (
     ComponentContainer,
     ContainerConfigurations,
     SetupComponentContainer,
+    LogAction,
 )
 from .conditions import (
     ANDConditions,

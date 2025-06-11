@@ -43,7 +43,8 @@ from .__utils import (
     SubstitionsListInput,
     LaunchFilesArguments,
 )
-from rclpy.node import expand_topic_name
+from rclpy.node import get_logger
+from rclpy.logging import LoggingSeverity
 
 
 # =============================================================================
@@ -95,6 +96,48 @@ class BranchAction(Action):
         if self._test.evaluate(context):
             return self._true_action.visit(context)
         return self._false_action.visit(context)
+
+
+class LogAction(Action):
+    def __init__(
+        self,
+        logger_name: str,
+        fmt: str,
+        log_lvl: LoggingSeverity = LoggingSeverity.INFO,
+        args: Dict[str, SubstitionsInput | Any] = {},
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self._logger = get_logger(logger_name)
+        self._fmt = fmt
+        self._lvl = log_lvl
+        self._args = args
+
+    def execute(self, context: LaunchContext) -> List[LaunchDescriptionEntity] | None:
+        # Get all substitutions
+        args: Dict[str, Any] = {}
+        for k, v in self._args.items():
+            if isinstance(v, Substitution):
+                args[k] = v.perform(context)
+            else:
+                args[k] = v
+
+        def send_log(func):
+            func(self._fmt.format(**args))
+
+        # Log it
+        match self._lvl:
+            case LoggingSeverity.DEBUG:
+                send_log(self._logger.debug)
+            case LoggingSeverity.INFO:
+                send_log(self._logger.info)
+            case LoggingSeverity.WARN:
+                send_log(self._logger.warn)
+            case LoggingSeverity.ERROR:
+                send_log(self._logger.error)
+            case LoggingSeverity.FATAL:
+                send_log(self._logger.fatal)
+        return None
 
 
 # =============================================================================
@@ -243,7 +286,7 @@ class SetupComponentContainer(ContainerConfigurations):
         - "container_ns": the namespace of the container
 
     In the case of needing to declare several containers in the same launch file,
-    these configuration can be prefixed by "\<prefix\>_" via the prefix argument.
+    these configuration can be prefixed by "prefix_" via the prefix argument.
     """
 
     def __init__(
