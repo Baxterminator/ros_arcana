@@ -43,8 +43,8 @@ from .__utils import (
     SubstitionsListInput,
     LaunchFilesArguments,
 )
-from rclpy.node import get_logger
-from rclpy.logging import LoggingSeverity
+from rclpy.logging import LoggingSeverity, get_logger
+from rclpy.impl.rcutils_logger import RcutilsLogger
 
 
 # =============================================================================
@@ -101,14 +101,17 @@ class BranchAction(Action):
 class LogAction(Action):
     def __init__(
         self,
-        logger_name: str,
+        logger: str | RcutilsLogger,
         fmt: str,
         log_lvl: LoggingSeverity = LoggingSeverity.INFO,
         args: Dict[str, SubstitionsInput | Any] = {},
         **kwargs,
     ):
         super().__init__(**kwargs)
-        self._logger = get_logger(logger_name)
+        if isinstance(logger, RcutilsLogger):
+            self._logger = logger
+        else:
+            self._logger = get_logger(logger)
         self._fmt = fmt
         self._lvl = log_lvl
         self._args = args
@@ -165,6 +168,7 @@ class IncludeLaunchFile(IncludeLaunchDescription):
             launch_arguments=launch_args,
             **kwargs,
         )
+        self._path = path
 
     def _make_description(
         self, t: LaunchType
@@ -174,6 +178,17 @@ class IncludeLaunchFile(IncludeLaunchDescription):
                 return lambda k: PythonLaunchDescriptionSource(k)
             case LaunchType.XML:
                 return lambda k: FrontendLaunchDescriptionSource(k)
+
+    def execute(self, context: LaunchContext) -> List[LaunchDescriptionEntity]:
+        logger = get_logger("INCLUDE")
+        logger.info(
+            f"Including {self._path.perform(context) if isinstance(self._path, Substitution) else self._path}"
+        )
+        return super().execute(context)
+
+    @property
+    def path(self) -> SubstitionsInput:
+        return self._path
 
 
 class IncludeXMLLaunchFile(IncludeLaunchFile):
