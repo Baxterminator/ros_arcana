@@ -9,7 +9,7 @@
 # =============================================================================
 
 from enum import Enum
-from launch import LaunchDescription, Action, Condition
+from launch import LaunchDescription, Action, Condition, Substitution
 from launch_ros.actions import Node, LoadComposableNodes, ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
 from typing import Optional, Iterable, Any, Callable, Dict, Type, TypeVar
@@ -150,7 +150,7 @@ class new_section:
         executable: Optional[SubstitionsListInput] = None,
         container_kwargs: Dict[str, Any] = {},
         **kwargs,
-    ) -> NamespaceSubstitution:
+    ) -> Substitution:
         """
         Setup a new container in this section and apply .
         """

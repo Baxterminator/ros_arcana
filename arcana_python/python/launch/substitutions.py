@@ -34,7 +34,7 @@ class TextConcat(Substitution):
         self._sep = separator
 
     def perform(self, context: LaunchContext) -> str:
-        return self._sep.join([x.perform(context) for x in self._substitutions])
+        return self._sep.join([str(x.perform(context)) for x in self._substitutions])   
 
 
 class NamespaceSubstitution(TextConcat):

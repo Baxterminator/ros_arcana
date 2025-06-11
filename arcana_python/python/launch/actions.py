@@ -156,6 +156,8 @@ class IncludeLaunchFile(IncludeLaunchDescription):
     Short-hand to generate IncludeLaunchDescription actions.
     """
 
+    logger = get_logger("Arcana")
+
     def __init__(
         self,
         path: SubstitionsInput,
@@ -180,8 +182,7 @@ class IncludeLaunchFile(IncludeLaunchDescription):
                 return lambda k: FrontendLaunchDescriptionSource(k)
 
     def execute(self, context: LaunchContext) -> List[LaunchDescriptionEntity]:
-        logger = get_logger("INCLUDE")
-        logger.info(
+        IncludeLaunchFile.logger.info(
             f"Including {self._path.perform(context) if isinstance(self._path, Substitution) else self._path}"
         )
         return super().execute(context)
@@ -235,7 +236,7 @@ class ComponentContainer(ComposableNodeContainer):
         self._sub_name = name
         self._sub_ns = namespace
 
-    def get_container(self) -> Optional[Substitution]:
+    def get_container(self) -> Substitution:
         return NamespaceSubstitution(
             ns=normalize_list(self._sub_ns),
             name=TextConcat(self._sub_name),
@@ -264,13 +265,14 @@ class ContainerConfigurations(GroupAction):
         other_actions: Iterable[Action] = [],
         **kwargs,
     ):
-        self._confs = SetupComponentContainer._ConfsName(prefix)
+        self._confs = ContainerConfigurations._ConfsName(prefix)
         super().__init__(
             [
                 DeclareLaunchArgument(
                     self._confs.make_container,
                     default_value="True",
                     description="Should the container be made ?",
+                    choices=["True", "False"],
                 ),
                 DeclareLaunchArgument(
                     self._confs.name,
@@ -281,6 +283,26 @@ class ContainerConfigurations(GroupAction):
                     self._confs.namespace,
                     default_value=namespace,
                     description="The namespace in which setup the container",
+                ),
+                LogAction(
+                    logger="Arcana",
+                    fmt='New container ({cont_name}) with launch parameters: make="{make}", name="{name}", ns="{ns}"',
+                    args={
+                        "cont_name": name,
+                        "make": self._confs.make_container,
+                        "name": self._confs.name,
+                        "ns": self._confs.namespace,
+                    },
+                ),
+                LogAction(
+                    logger="Arcana",
+                    fmt='New container ({cont_name}) with launch values: make="{make}", name="{name}", ns="{ns}"',
+                    args={
+                        "cont_name": name,
+                        "make": LaunchConfiguration(self._confs.make_container),
+                        "name": LaunchConfiguration(self._confs.name),
+                        "ns": LaunchConfiguration(self._confs.namespace),
+                    },
                 ),
                 *other_actions,
             ],
@@ -315,33 +337,26 @@ class SetupComponentContainer(ContainerConfigurations):
         container_kwargs: Dict[str, Any] = {},
         **kwargs,
     ):
-        self._confs = SetupComponentContainer._ConfsName(prefix)
-
+        self._confs = ContainerConfigurations._ConfsName(prefix)
+        self._container = ComponentContainer(
+            name=LaunchConfiguration(self._confs.name),
+            namespace=LaunchConfiguration(self._confs.namespace),
+            package=package,
+            executable=executable,
+            condition=IfCondition(LaunchConfiguration(self._confs.make_container)),
+            **container_kwargs,
+        )
         super().__init__(
             name=name,
             namespace=namespace,
             condition=condition,
             prefix=prefix,
-            other_actions=[
-                ComponentContainer(
-                    name=LaunchConfiguration(self._confs.name),
-                    namespace=LaunchConfiguration(self._confs.namespace),
-                    package=package,
-                    executable=executable,
-                    condition=IfCondition(
-                        LaunchConfiguration(self._confs.make_container)
-                    ),
-                    **container_kwargs,
-                )
-            ],
+            other_actions=[self._container],
             **kwargs,
         )
 
-    def get_container(self) -> NamespaceSubstitution:
+    def get_container(self) -> Substitution:
         """
         Return the initialized node container.
         """
-        return NamespaceSubstitution(
-            LaunchConfiguration(self._confs.namespace),
-            LaunchConfiguration(self._confs.name),
-        )
+        return self._container.get_container()
