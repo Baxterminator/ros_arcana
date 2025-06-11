@@ -351,7 +351,14 @@ class SetupComponentContainer(ContainerConfigurations):
             namespace=namespace,
             condition=condition,
             prefix=prefix,
-            other_actions=[self._container],
+            other_actions=[
+                LogAction(
+                    logger="Arcana",
+                    fmt="Container to use: {container}",
+                    args={"container": self.get_container()},
+                ),
+                self._container,
+            ],
             **kwargs,
         )
 
